@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Expense Reports</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      margin: 0;
+      background: #f5f5f5;
+    }
+
+    .nav {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      background: #111;
+      position: sticky;
+      top: 0;
+    }
+
+    .nav a {
+      color: white;
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .nav a.active {
+      background: #00c896;
+      color: black;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    select, button {
+      padding: 8px;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <a href="../dashboard/index.html" id="nav-dashboard">📊 Dashboard</a>
+  <a href="../expense-tracker/index.html" id="nav-expense">➕ Expenses</a>
+  <a href="../reports/index.html" id="nav-reports">📈 Reports</a>
+</div>
+
+<div class="container">
+
+<h2>📈 Expense Reports</h2>
+
+<button onclick="loadData()">🔄 Refresh</button>
+
+<br><br>
+
+<label>Select Month:</label><br>
+<select id="monthFilter" onchange="render()"></select>
+
+<h3 id="summary">Loading...</h3>
+
+<div id="merchantBreakdown"></div>
+
+</div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+
+let allData = [];
+
+/* =========================
+   LOAD DATA
+========================= */
+async function loadData() {
+
+  const res = await fetch(API_URL);
+  const data = await res.json();
+
+  allData = data;
+
+  populateMonths();
+  render();
+}
+
+/* =========================
+   MONTH LIST
+========================= */
+function populateMonths() {
+
+  const select = document.getElementById("monthFilter");
+
+  const months = new Set();
+
+  allData.forEach(row => {
+    const d = new Date(row.date);
+    if (!isNaN(d)) {
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      months.add(key);
+    }
+  });
+
+  select.innerHTML = `<option value="all">All Months</option>`;
+
+  Array.from(months).sort().reverse().forEach(m => {
+    select.innerHTML += `<option value="${m}">${m}</option>`;
+  });
+}
+
+/* =========================
+   FILTER + RENDER
+========================= */
+function render() {
+
+  const selected = document.getElementById("monthFilter").value;
+
+  let filtered = allData;
+
+  if (selected !== "all") {
+    filtered = allData.filter(row => {
+      const d = new Date(row.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      return key === selected;
+    });
+  }
+
+  let total = 0;
+  const merchantMap = {};
+
+  filtered.forEach(row => {
+
+    const amount = parseFloat(row.amount || 0);
+    const merchant = row.merchant || "Unknown";
+
+    total += amount;
+
+    merchantMap[merchant] = (merchantMap[merchant] || 0) + amount;
+  });
+
+  /* SUMMARY */
+  document.getElementById("summary").innerText =
+    `Total Expenses: ₱${total.toLocaleString()}`;
+
+  /* BREAKDOWN */
+  let html = `<h3>Merchant Breakdown</h3>`;
+
+  Object.keys(merchantMap)
+    .sort((a,b) => merchantMap[b] - merchantMap[a])
+    .forEach(name => {
+
+      html += `
+        <div class="card">
+          <b>${name}</b><br>
+          ₱${merchantMap[name].toLocaleString()}
+        </div>
+      `;
+    });
+
+  document.getElementById("merchantBreakdown").innerHTML = html;
+}
+
+/* =========================
+   NAV ACTIVE
+========================= */
+window.addEventListener("DOMContentLoaded", () => {
+
+  const path = window.location.pathname;
+
+  if (path.includes("/dashboard/")) {
+    document.getElementById("nav-dashboard")?.classList.add("active");
+  }
+
+  if (path.includes("/expense-tracker/")) {
+    document.getElementById("nav-expense")?.classList.add("active");
+  }
+
+  if (path.includes("/reports/")) {
+    document.getElementById("nav-reports")?.classList.add("active");
+  }
+
+  loadData();
+});
+
+</script>
+
+</body>
+</html>
