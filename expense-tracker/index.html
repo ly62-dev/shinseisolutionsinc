@@ -21,9 +21,13 @@
 <input type="text" id="cashVoucher" placeholder="Cash Voucher" tabindex="5"><br><br>
 
 <!-- FILE UPLOAD -->
-<input type="file" id="receipt" tabindex="6"><br><br>
+<input type="file" id="receipt" tabindex="6" accept="image/*" capture="environment"><br><br>
 
-<button onclick="submitExpense()">Save Expense</button>
+<button onclick="submitExpense(false)">Save</button>
+
+<button onclick="submitExpense(true)">
+  Save & Add Another
+</button>
 
 <p id="status"></p>
 
@@ -60,7 +64,7 @@ function toBase64(file) {
   });
 }
 
-async function submitExpense() {
+async function submitExpense(autoNext = false) {
 
   const date = document.getElementById("date").value;
   const vatTin = document.getElementById("vatTin").value;
@@ -122,7 +126,14 @@ async function submitExpense() {
     // AUTO FOCUS BACK TO MERCHANT (fast entry mode)
       setTimeout(() => {
         document.getElementById("merchant").focus();
-    }, 300);
+    }, 200);
+
+      // if NOT auto-next, scroll top + clear message
+    if (!autoNext) {
+      setTimeout(() => {
+        document.getElementById("status").innerText = "";
+      }, 2000);
+    }
       
       window.scrollTo({ top: 0, behavior: "smooth" });
       
