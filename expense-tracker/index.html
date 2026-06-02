@@ -123,8 +123,36 @@ function removeFile(index) {
 ========================= */
 function toBase64(file) {
   return new Promise(resolve => {
+
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(",")[1]);
+
+    reader.onload = () => {
+
+      const img = new Image();
+      img.src = reader.result;
+
+      img.onload = () => {
+
+        const canvas = document.createElement("canvas");
+
+        // 🔥 SPEED + SIZE OPTIMIZATION
+        const MAX_WIDTH = 1200;
+
+        const scale = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scale;
+
+        const ctx = canvas.getContext("2d");
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // 🔥 compress JPEG (huge speed gain)
+        const compressed = canvas.toDataURL("image/jpeg", 0.7);
+
+        resolve(compressed.split(",")[1]);
+      };
+    };
+
     reader.readAsDataURL(file);
   });
 }
