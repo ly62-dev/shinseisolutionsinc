@@ -15,31 +15,25 @@
 <input type="number" id="amount" placeholder="Amount"><br><br>
 <input type="text" id="cashVoucher" placeholder="Cash Voucher"><br><br>
 
-<h3>Take Photo</h3>
+<h3>Receipts</h3>
 
-<input
-  type="file"
-  id="cameraReceipt"
-  accept="image/*"
-  capture="environment">
+<button onclick="openCamera()">📷 Add Photo</button>
+
+<div id="preview"
+     style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+</div>
 
 <br><br>
 
-<h3>Or Select Existing Photos</h3>
-
-<input
-  type="file"
-  id="receipt"
-  accept="image/*"
-  multiple>
-
-<button onclick="submitExpense()">Save Expense</button>
+<button onclick="submitExpense()">💾 Save Expense</button>
 
 <p id="status"></p>
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwkAJIu8fNeq9dz_eGe0ZXI0naQZPJjUKUh6Pjbx83o0uSPkF8LuBG5o9OWopn-rpLc/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxaJY_cSgPtCn8yWAuFTXX8JW_Af5jzsY88aLBYH8uENPMsFurdrIkwufsNa2JJeTCW/exec";
+
+let allFiles = [];
 
 function sanitize(text) {
   return text.toLowerCase()
@@ -65,6 +59,52 @@ function toBase64(file) {
   });
 }
 
+function openCamera() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.capture = "environment";
+
+  input.onchange = function () {
+    const file = input.files[0];
+    if (file) {
+      allFiles.push(file);
+      renderPreview();
+    }
+  };
+
+  input.click();
+}
+
+function renderPreview() {
+  const container = document.getElementById("preview");
+  container.innerHTML = "";
+
+  allFiles.forEach((file, index) => {
+    const url = URL.createObjectURL(file);
+
+    container.innerHTML += `
+      <div style="position:relative;">
+        <img src="${url}"
+             style="width:100px; height:100px;
+                    object-fit:cover;
+                    border-radius:8px;">
+
+        <button onclick="removeFile(${index})"
+                style="position:absolute;
+                       top:0; right:0;">
+          ❌
+        </button>
+      </div>
+    `;
+  });
+}
+
+function removeFile(index) {
+  allFiles.splice(index, 1);
+  renderPreview();
+}
+
 async function submitExpense() {
 
   const date = document.getElementById("date").value;
@@ -72,19 +112,6 @@ async function submitExpense() {
   const merchant = document.getElementById("merchant").value;
   const amount = document.getElementById("amount").value;
   const cashVoucher = document.getElementById("cashVoucher").value;
-
-  const galleryFiles = document.getElementById("receipt").files;
-const cameraFile = document.getElementById("cameraReceipt").files[0];
-
-let allFiles = [];
-
-if (cameraFile) {
-  allFiles.push(cameraFile);
-}
-
-for (let i = 0; i < galleryFiles.length; i++) {
-  allFiles.push(galleryFiles[i]);
-}
 
   if (!date || !merchant) {
     alert("Date and Merchant required");
@@ -94,22 +121,17 @@ for (let i = 0; i < galleryFiles.length; i++) {
   let fileBase64Array = [];
   let fileNameArray = [];
 
-  if (allFiles.length > 0) {
   for (let i = 0; i < allFiles.length; i++) {
 
-      const base64 = await toBase64(allFiles[i]);
-      fileBase64Array.push(base64);
+    const base64 = await toBase64(allFiles[i]);
+    fileBase64Array.push(base64);
 
-      const name =
-        `${formatDateMMDDYYYY(date)}_${sanitize(merchant)}_${getRandom()}_${i}.jpg`;
+    const name =
+      `${formatDateMMDDYYYY(date)}_${sanitize(merchant)}_${getRandom()}_${i}.jpg`;
 
-      fileNameArray.push(name);
-    }
+    fileNameArray.push(name);
   }
-  console.log("Files selected:", files.length);
-  console.log("Base64 array count:", fileBase64Array.length);
-  console.log("Filename array count:", fileNameArray.length);
-  
+
   document.getElementById("status").innerText = "Uploading...";
 
   const payload = {
@@ -135,16 +157,15 @@ for (let i = 0; i < galleryFiles.length; i++) {
       document.getElementById("status").innerText =
         "Saved: " + data.id;
 
+      // reset form
       document.getElementById("date").value = "";
       document.getElementById("vatTin").value = "";
       document.getElementById("merchant").value = "";
       document.getElementById("amount").value = "";
       document.getElementById("cashVoucher").value = "";
-      document.getElementById("receipt").value = "";
 
-      setTimeout(() => {
-        document.getElementById("merchant").focus();
-      }, 200);
+      allFiles = [];
+      renderPreview();
 
       window.scrollTo({ top: 0, behavior: "smooth" });
 
