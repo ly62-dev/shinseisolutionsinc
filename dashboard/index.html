@@ -33,7 +33,7 @@
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyGV_cYHE5-yDSlx3L8gxSpg21sl6VzNE6cmp2iL6L7mE6IPMpwNDOR3t-fRTHOiNQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw60k7RzW2qn_0kvnJu3tC_1QHv2wDIZVi-yBPoVgHO4f5GqUvH6w_-qbwKexqdr_m_/exec";
 
 let allData = [];
 
@@ -107,7 +107,7 @@ function openRecord(index) {
 
     if (!id) return;
 
-    const url = "https://drive.google.com/uc?id=" + id.trim();
+    const url = "https://drive.google.com/thumbnail?id=" + id.trim() + "&sz=w1000";
 
     content.innerHTML += `
       <img src="${url}"
