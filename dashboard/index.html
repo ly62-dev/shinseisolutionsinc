@@ -51,9 +51,9 @@ async function loadData() {
 
   data.forEach((row, index) => {
 
-    const merchant = row.Merchant || "Unknown";
-    const amount = parseFloat(row.Amount || 0);
-    const date = row.Date || "";
+    const merchant = row.merchant || "Unknown";
+    const amount = parseFloat(row.amount || 0);
+    const date = row.date || "";
 
     total += amount;
 
@@ -88,8 +88,8 @@ function openRecord(index) {
   const modal = document.getElementById("modal");
   const content = document.getElementById("modalContent");
 
-  const merchant = row.Merchant || "Expense";
-  const files = row.Receipt_File_ID || "";
+  const merchant = row.merchant || "Expense";
+  const files = row.receiptFiles || "";
 
   content.innerHTML = `
     <h3 style="color:white;">${merchant}</h3>
