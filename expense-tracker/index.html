@@ -1,4 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shinsei Expense Tracker</title>
+</head>
+
+<body style="font-family: Arial; padding: 20px;">
+
+<h2>Expense Tracker</h2>
+
+<!-- INPUTS FIRST -->
+<input type="date" id="date"><br><br>
+
+<input type="text" id="vatTin" placeholder="VAT TIN"><br><br>
+
+<input type="text" id="merchant" placeholder="Merchant"><br><br>
+
+<input type="number" id="amount" placeholder="Amount"><br><br>
+
+<input type="text" id="cashVoucher" placeholder="Cash Voucher"><br><br>
+
+<!-- FILE UPLOAD -->
+<input type="file" id="receipt"><br><br>
+
+<button onclick="submitExpense()">Save Expense</button>
+
+<p id="status"></p>
+
 <script>
+
 const API_URL = "https://script.google.com/macros/s/AKfycbyckvVIMlLYLSt5FV0Fn4DrvrbY_xrgGe8nX3-PbWUEMEGVQ4_34D0kCMTzJUSP38Om/exec";
 
 function sanitize(text) {
@@ -10,7 +40,12 @@ function sanitize(text) {
 
 function formatDateMMDDYYYY(dateStr) {
   const d = new Date(dateStr);
-  return `${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}${d.getFullYear()}`;
+
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yyyy = d.getFullYear();
+
+  return `${mm}${dd}${yyyy}`;
 }
 
 function getRandom() {
@@ -28,12 +63,15 @@ function toBase64(file) {
 async function submitExpense() {
 
   const date = document.getElementById("date").value;
+  const vatTin = document.getElementById("vatTin").value;
   const merchant = document.getElementById("merchant").value;
+  const amount = document.getElementById("amount").value;
+  const cashVoucher = document.getElementById("cashVoucher").value;
 
   const file = document.getElementById("receipt").files[0];
 
   if (!date || !merchant) {
-    alert("Date and Merchant required");
+    alert("Date and Merchant are required");
     return;
   }
 
@@ -51,10 +89,10 @@ async function submitExpense() {
 
   const payload = {
     date,
-    vatTin: document.getElementById("vatTin").value,
+    vatTin,
     merchant,
-    amount: document.getElementById("amount").value,
-    cashVoucher: document.getElementById("cashVoucher").value,
+    amount,
+    cashVoucher,
     fileBase64,
     fileName
   };
@@ -80,4 +118,8 @@ async function submitExpense() {
       "Request failed";
   }
 }
+
 </script>
+
+</body>
+</html>
