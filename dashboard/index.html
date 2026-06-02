@@ -145,7 +145,7 @@ async function loadData() {
 
         <b>${merchant}</b><br>
         ₱${amount}<br>
-        <small>${date}</small><br>
+        <small>${formatDateMMDDYYYY(date)}</small><br>
 
         <small style="color:blue;">View receipts →</small>
       </div>
@@ -224,6 +224,19 @@ function closeModal() {
   document.getElementById("modal").style.display = "none";
 }
 
+  function formatDateMMDDYYYY(dateStr) {
+  if (!dateStr) return "";
+
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yyyy = d.getFullYear();
+
+  return `${mm}-${dd}-${yyyy}`;
+}
+  
 /* =========================
    ACTIVE NAV HIGHLIGHT
 ========================= */
