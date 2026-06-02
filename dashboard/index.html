@@ -3,9 +3,79 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Expense Dashboard</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      padding: 0;
+      margin: 0;
+      background: #f5f5f5;
+    }
+
+    /* NAVBAR */
+    .nav {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      background: #111;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .nav a {
+      color: white;
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .nav a.active {
+      background: #00c896;
+      color: black;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    /* CARDS */
+    .card {
+      border-bottom: 1px solid #ddd;
+      padding: 12px;
+      cursor: pointer;
+      background: #fafafa;
+      margin-bottom: 8px;
+      border-radius: 6px;
+    }
+
+    /* MODAL */
+    #modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      overflow: auto;
+      padding: 20px;
+    }
+  </style>
 </head>
 
-<body style="font-family: Arial; padding: 20px;">
+<body>
+
+<!-- NAVIGATION -->
+<div class="nav">
+  <a href="../dashboard/index.html" id="nav-dashboard">📊 Dashboard</a>
+  <a href="../expense-tracker/index.html" id="nav-expense">➕ Expenses</a>
+  <a href="../reports/index.html" id="nav-reports">📈 Reports</a>
+</div>
+
+<!-- PAGE CONTENT -->
+<div class="container">
 
 <h2>Expense Dashboard</h2>
 
@@ -16,13 +86,10 @@
 <h3>Expenses</h3>
 <div id="list"></div>
 
-<!-- IMAGE MODAL -->
-<div id="modal"
-     style="display:none; position:fixed; top:0; left:0;
-            width:100%; height:100%;
-            background:rgba(0,0,0,0.9);
-            overflow:auto; padding:20px;">
+</div>
 
+<!-- IMAGE MODAL -->
+<div id="modal">
   <button onclick="closeModal()"
           style="position:fixed; top:10px; right:10px; padding:10px;">
     Close
@@ -37,6 +104,9 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyF9QFXq1W1fAJcwJ1Ggmlk
 
 let allData = [];
 
+/* =========================
+   LOAD DATA
+========================= */
 async function loadData() {
 
   document.getElementById("total").innerText = "Loading...";
@@ -58,13 +128,7 @@ async function loadData() {
     total += amount;
 
     html += `
-      <div onclick="openRecord(${index})"
-           style="border-bottom:1px solid #ddd;
-                  padding:12px;
-                  cursor:pointer;
-                  background:#fafafa;
-                  margin-bottom:8px;
-                  border-radius:6px;">
+      <div class="card" onclick="openRecord(${index})">
 
         <b>${merchant}</b><br>
         ₱${amount}<br>
@@ -81,6 +145,9 @@ async function loadData() {
   document.getElementById("list").innerHTML = html;
 }
 
+/* =========================
+   OPEN RECEIPTS
+========================= */
 function openRecord(index) {
 
   const row = allData[index];
@@ -91,9 +158,7 @@ function openRecord(index) {
   const merchant = row.merchant || "Expense";
   const files = row.receiptFiles || "";
 
-  content.innerHTML = `
-    <h3 style="color:white;">${merchant}</h3>
-  `;
+  content.innerHTML = `<h3 style="color:white;">${merchant}</h3>`;
 
   if (!files) {
     content.innerHTML += "<p style='color:white;'>No attachments</p>";
@@ -101,13 +166,14 @@ function openRecord(index) {
     return;
   }
 
-  const fileArray = files.split(",");
-
-  fileArray.forEach(id => {
+  files.split(",").forEach(id => {
 
     if (!id) return;
 
-    const url = "https://drive.google.com/thumbnail?id=" + id.trim() + "&sz=w1000";
+    const url =
+      "https://drive.google.com/thumbnail?id=" +
+      id.trim() +
+      "&sz=w1000";
 
     content.innerHTML += `
       <img src="${url}"
@@ -122,10 +188,31 @@ function openRecord(index) {
   modal.style.display = "block";
 }
 
+/* =========================
+   CLOSE MODAL
+========================= */
 function closeModal() {
   document.getElementById("modal").style.display = "none";
 }
 
+/* =========================
+   ACTIVE NAV HIGHLIGHT
+========================= */
+const path = window.location.pathname;
+
+if (path.includes("/dashboard/")) {
+  document.getElementById("nav-dashboard")?.classList.add("active");
+}
+
+if (path.includes("/expense-tracker/")) {
+  document.getElementById("nav-expense")?.classList.add("active");
+}
+
+if (path.includes("/reports/")) {
+  document.getElementById("nav-reports")?.classList.add("active");
+}
+
+/* INIT */
 loadData();
 
 </script>
