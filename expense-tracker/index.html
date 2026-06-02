@@ -15,9 +15,23 @@
 <input type="number" id="amount" placeholder="Amount"><br><br>
 <input type="text" id="cashVoucher" placeholder="Cash Voucher"><br><br>
 
-<input type="file" id="receipt"
-       accept="image/*"
-       multiple><br><br>
+<h3>Take Photo</h3>
+
+<input
+  type="file"
+  id="cameraReceipt"
+  accept="image/*"
+  capture="environment">
+
+<br><br>
+
+<h3>Or Select Existing Photos</h3>
+
+<input
+  type="file"
+  id="receipt"
+  accept="image/*"
+  multiple>
 
 <button onclick="submitExpense()">Save Expense</button>
 
@@ -59,7 +73,18 @@ async function submitExpense() {
   const amount = document.getElementById("amount").value;
   const cashVoucher = document.getElementById("cashVoucher").value;
 
-  const files = document.getElementById("receipt").files;
+  const galleryFiles = document.getElementById("receipt").files;
+const cameraFile = document.getElementById("cameraReceipt").files[0];
+
+let allFiles = [];
+
+if (cameraFile) {
+  allFiles.push(cameraFile);
+}
+
+for (let i = 0; i < galleryFiles.length; i++) {
+  allFiles.push(galleryFiles[i]);
+}
 
   if (!date || !merchant) {
     alert("Date and Merchant required");
@@ -69,10 +94,10 @@ async function submitExpense() {
   let fileBase64Array = [];
   let fileNameArray = [];
 
-  if (files && files.length > 0) {
-    for (let i = 0; i < files.length; i++) {
+  if (allFiles.length > 0) {
+  for (let i = 0; i < allFiles.length; i++) {
 
-      const base64 = await toBase64(files[i]);
+      const base64 = await toBase64(allFiles[i]);
       fileBase64Array.push(base64);
 
       const name =
