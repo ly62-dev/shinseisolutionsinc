@@ -1,41 +1,81 @@
 <!DOCTYPE html>
-<style>
-  .nav {
-    display: flex;
-    gap: 12px;
-    padding: 12px;
-    background: #111;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-  }
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Expense Tracker</title>
 
-  .nav a {
-    color: white;
-    text-decoration: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-  }
+  <style>
+    body {
+      font-family: Arial;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+    }
 
-  .nav a.active {
-    background: #00c896;
-    color: black;
-    font-weight: bold;
-  }
-</style>
+    /* NAV */
+    .nav {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      background: #111;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
 
+    .nav a {
+      color: white;
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .nav a.active {
+      background: #00c896;
+      color: black;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    /* PREVIEW */
+    #preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    /* LOADING */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      font-size: 18px;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- NAVIGATION -->
 <div class="nav">
   <a href="../dashboard/index.html" id="nav-dashboard">📊 Dashboard</a>
   <a href="../expense-tracker/index.html" id="nav-expense">➕ Expenses</a>
   <a href="../reports/index.html" id="nav-reports">📈 Reports</a>
 </div>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Expense Tracker</title>
-</head>
 
-<body style="font-family: Arial; padding: 20px;">
+<div class="container">
 
 <h2>Expense Tracker</h2>
 
@@ -51,8 +91,7 @@
 
 <button onclick="openCamera()">📷 Add Receipt</button>
 
-<div id="preview"
-     style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;"></div>
+<div id="preview"></div>
 
 <br>
 
@@ -60,22 +99,11 @@
 
 <p id="status"></p>
 
-<!-- LOADING OVERLAY -->
-<div id="loadingOverlay"
-     style="display:none;
-            position:fixed;
-            top:0; left:0;
-            width:100%; height:100%;
-            background:rgba(0,0,0,0.7);
-            color:white;
-            font-size:18px;
-            justify-content:center;
-            align-items:center;
-            z-index:9999;">
-  <div style="text-align:center;">
-    ⏳ Saving Expense...<br>
-    Please wait
-  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loadingOverlay">
+  ⏳ Saving Expense... Please wait
 </div>
 
 <script>
@@ -86,7 +114,7 @@ let allFiles = [];
 let isSaving = false;
 
 /* =========================
-   UI LOCK
+   LOADING UI
 ========================= */
 function setLoading(state) {
   document.getElementById("loadingOverlay").style.display =
@@ -98,7 +126,7 @@ function setLoading(state) {
 }
 
 /* =========================
-   CAMERA INPUT (MOBILE FRIENDLY)
+   CAMERA INPUT
 ========================= */
 function openCamera() {
   const input = document.createElement("input");
@@ -106,7 +134,7 @@ function openCamera() {
   input.accept = "image/*";
   input.capture = "environment";
 
-  input.onchange = function () {
+  input.onchange = () => {
     const file = input.files[0];
     if (file) {
       allFiles.push(file);
@@ -118,7 +146,7 @@ function openCamera() {
 }
 
 /* =========================
-   PREVIEW IMAGES
+   PREVIEW
 ========================= */
 function renderPreview() {
 
@@ -140,16 +168,13 @@ function renderPreview() {
   });
 }
 
-/* =========================
-   REMOVE IMAGE
-========================= */
 function removeFile(index) {
   allFiles.splice(index, 1);
   renderPreview();
 }
 
 /* =========================
-   BASE64 CONVERTER
+   BASE64 + COMPRESSION
 ========================= */
 function toBase64(file) {
   return new Promise(resolve => {
@@ -165,18 +190,15 @@ function toBase64(file) {
 
         const canvas = document.createElement("canvas");
 
-        // 🔥 SPEED + SIZE OPTIMIZATION
         const MAX_WIDTH = 1200;
-
         const scale = MAX_WIDTH / img.width;
+
         canvas.width = MAX_WIDTH;
         canvas.height = img.height * scale;
 
         const ctx = canvas.getContext("2d");
-
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        // 🔥 compress JPEG (huge speed gain)
         const compressed = canvas.toDataURL("image/jpeg", 0.7);
 
         resolve(compressed.split(",")[1]);
@@ -202,7 +224,7 @@ function formatDate(dateStr) {
 }
 
 /* =========================
-   MAIN SAVE FUNCTION (SAFE + FAST)
+   SAVE
 ========================= */
 async function submitExpense() {
 
@@ -226,16 +248,12 @@ async function submitExpense() {
 
   try {
 
-    /* =========================
-       STEP 1: CONVERT FILES
-    ========================= */
     const fileBase64Array = [];
     const fileNameArray = [];
 
     for (let i = 0; i < allFiles.length; i++) {
 
-      const file = allFiles[i];
-      const base64 = await toBase64(file);
+      const base64 = await toBase64(allFiles[i]);
 
       fileBase64Array.push(base64);
 
@@ -244,9 +262,6 @@ async function submitExpense() {
       );
     }
 
-    /* =========================
-       STEP 2: SEND TO BACKEND
-    ========================= */
     const res = await fetch(API_URL, {
       method: "POST",
       body: JSON.stringify({
@@ -265,9 +280,7 @@ async function submitExpense() {
     document.getElementById("status").innerText =
       "Saved: " + data.id;
 
-    /* =========================
-       RESET UI
-    ========================= */
+    /* RESET */
     allFiles = [];
     renderPreview();
 
@@ -286,8 +299,11 @@ async function submitExpense() {
   isSaving = false;
 }
 
-</script>
-<script>
+/* =========================
+   NAV ACTIVE
+========================= */
+window.addEventListener("DOMContentLoaded", () => {
+
   const path = window.location.pathname;
 
   if (path.includes("/dashboard/")) {
@@ -301,6 +317,9 @@ async function submitExpense() {
   if (path.includes("/reports/")) {
     document.getElementById("nav-reports")?.classList.add("active");
   }
+});
+
 </script>
+
 </body>
 </html>
