@@ -110,38 +110,34 @@ async function submitExpense(autoNext = false) {
     const data = await res.json();
 
     if (data.status === "success") {
+
       document.getElementById("status").innerText =
       "Saved: " + data.id;
 
-    // RESET FORM AFTER SUCCESS
+    // RESET FORM
       document.getElementById("date").value = "";
       document.getElementById("vatTin").value = "";
       document.getElementById("merchant").value = "";
       document.getElementById("amount").value = "";
       document.getElementById("cashVoucher").value = "";
-
-    // Reset file input (important trick)
       document.getElementById("receipt").value = "";
 
-    // AUTO FOCUS BACK TO MERCHANT (fast entry mode)
-      setTimeout(() => {
+    // FOCUS BACK TO MERCHANT
+    setTimeout(() => {
         document.getElementById("merchant").focus();
     }, 200);
 
-      // if NOT auto-next, scroll top + clear message
-    if (!autoNext) {
-      setTimeout(() => {
-        document.getElementById("status").innerText = "";
-      }, 2000);
-    }
-      
+    // ALWAYS scroll to top (nice mobile UX)
       window.scrollTo({ top: 0, behavior: "smooth" });
-      
-    // Optional: clear message after 2 seconds
-      setTimeout(() => {
-        document.getElementById("status").innerText = "";
-    }, 2000);
-} else {
+
+    // ONLY auto-clear message if NOT "Save & Add Another"
+      if (!autoNext) {
+        setTimeout(() => {
+          document.getElementById("status").innerText = "";
+        }, 2000);
+    }
+
+  } else {
       document.getElementById("status").innerText =
         "Error: " + data.message;
     }
