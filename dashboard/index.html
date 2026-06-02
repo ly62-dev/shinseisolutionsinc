@@ -1,3 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Expense Dashboard</title>
+</head>
+
+<body style="font-family: Arial; padding: 20px;">
+
+<h2>Expense Dashboard</h2>
+
+<button onclick="loadData()">🔄 Refresh</button>
+
+<p id="total">Loading...</p>
+
+<h3>Expenses</h3>
+<div id="list"></div>
+
+<!-- IMAGE MODAL -->
+<div id="modal"
+     style="display:none; position:fixed; top:0; left:0;
+            width:100%; height:100%;
+            background:rgba(0,0,0,0.9);
+            overflow:auto; padding:20px;">
+
+  <button onclick="closeModal()"
+          style="position:fixed; top:10px; right:10px; padding:10px;">
+    Close
+  </button>
+
+  <div id="modalContent"></div>
+</div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycbwkAJIu8fNeq9dz_eGe0ZXI0naQZPJjUKUh6Pjbx83o0uSPkF8LuBG5o9OWopn-rpLc/exec";
+
 let allData = [];
 
 async function loadData() {
@@ -90,3 +127,8 @@ function closeModal() {
 }
 
 loadData();
+
+</script>
+
+</body>
+</html>
