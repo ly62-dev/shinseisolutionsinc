@@ -92,13 +92,14 @@ td {
 <select id="monthFilter" onchange="render()"></select>
 
 <h3 id="summary">Loading...</h3>
-  <h3>Monthly Totals</h3>
+<h3>Monthly Totals</h3>
 <div id="monthlyTotals"></div>
 
 <h3>Merchant Breakdown</h3>
 <div id="merchantBreakdown"></div>
 
-<div id="merchantBreakdown"></div>
+<h3>Expense Details</h3>
+<div id="expenseDetails"></div>
 
 </div>
 
@@ -266,6 +267,46 @@ function render() {
 
   document.getElementById("merchantBreakdown").innerHTML =
     merchantHtml;
+  /* EXPENSE DETAILS TABLE */
+
+let detailHtml = `
+<table>
+  <tr>
+    <th>Date</th>
+    <th>TIN</th>
+    <th>Merchant</th>
+    <th class="amount">Amount</th>
+  </tr>
+`;
+
+filtered
+  .sort((a,b) => new Date(b.date) - new Date(a.date))
+  .forEach(row => {
+
+    detailHtml += `
+      <tr>
+        <td>${row.date || ""}</td>
+        <td>${row.vatTin || ""}</td>
+        <td>${row.merchant || ""}</td>
+        <td class="amount">
+          ₱${parseFloat(row.amount || 0).toLocaleString()}
+        </td>
+      </tr>
+    `;
+  });
+
+detailHtml += `
+  <tr class="total-row">
+    <td colspan="3">TOTAL</td>
+    <td class="amount">
+      ₱${total.toLocaleString()}
+    </td>
+  </tr>
+</table>
+`;
+
+document.getElementById("expenseDetails").innerHTML =
+  detailHtml;
 }
 
 /* =========================
