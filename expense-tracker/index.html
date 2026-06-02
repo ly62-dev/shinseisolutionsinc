@@ -1,19 +1,83 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Expense Tracker</title>
-</head>
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyckvVIMlLYLSt5FV0Fn4DrvrbY_xrgGe8nX3-PbWUEMEGVQ4_34D0kCMTzJUSP38Om/exec";
 
-<body style="font-family: Arial; padding:20px;">
+function sanitize(text) {
+  return text.toLowerCase()
+    .replace(/[^a-z0-9]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");
+}
 
-<h2>Expense Tracker</h2>
+function formatDateMMDDYYYY(dateStr) {
+  const d = new Date(dateStr);
+  return `${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}${d.getFullYear()}`;
+}
 
-<p>This page is working 🎉</p>
+function getRandom() {
+  return Math.floor(1000 + Math.random() * 9000);
+}
 
-<button onclick="location.href='../'">
-  Back to Home
-</button>
+function toBase64(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.readAsDataURL(file);
+  });
+}
 
-</body>
-</html>
+async function submitExpense() {
+
+  const date = document.getElementById("date").value;
+  const merchant = document.getElementById("merchant").value;
+
+  const file = document.getElementById("receipt").files[0];
+
+  if (!date || !merchant) {
+    alert("Date and Merchant required");
+    return;
+  }
+
+  let fileBase64 = "";
+  let fileName = "";
+
+  if (file) {
+    fileBase64 = await toBase64(file);
+
+    fileName =
+      `${formatDateMMDDYYYY(date)}_${sanitize(merchant)}_${getRandom()}.jpg`;
+  }
+
+  document.getElementById("status").innerText = "Uploading...";
+
+  const payload = {
+    date,
+    vatTin: document.getElementById("vatTin").value,
+    merchant,
+    amount: document.getElementById("amount").value,
+    cashVoucher: document.getElementById("cashVoucher").value,
+    fileBase64,
+    fileName
+  };
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.status === "success") {
+      document.getElementById("status").innerText =
+        "Saved: " + data.id;
+    } else {
+      document.getElementById("status").innerText =
+        "Error: " + data.message;
+    }
+
+  } catch (err) {
+    document.getElementById("status").innerText =
+      "Request failed";
+  }
+}
+</script>
