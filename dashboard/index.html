@@ -166,24 +166,40 @@ function openRecord(index) {
     return;
   }
 
-  files.split(",").forEach(id => {
+  content.innerHTML += `
+  <div style="
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:15px;
+  " id="gallery"></div>
+`;
 
-    if (!id) return;
+const gallery = document.getElementById("gallery");
 
-    const url =
-      "https://drive.google.com/thumbnail?id=" +
-      id.trim() +
-      "&sz=w1000";
+files.split(",").forEach(id => {
 
-    content.innerHTML += `
-      <img src="${url}"
-           style="width:100%;
-                  margin-bottom:15px;
-                  border-radius:10px;
-                  background:white;
-                  padding:5px;">
-    `;
-  });
+  if (!id) return;
+
+  const url =
+    "https://drive.google.com/thumbnail?id=" +
+    id.trim() +
+    "&sz=w600";
+
+  gallery.innerHTML += `
+    <img
+      src="${url}"
+      onclick="window.open('${url}','_blank')"
+      style="
+        width:120px;
+        height:120px;
+        object-fit:cover;
+        border-radius:8px;
+        cursor:pointer;
+        background:white;
+      ">
+  `;
+});
 
   modal.style.display = "block";
 }
