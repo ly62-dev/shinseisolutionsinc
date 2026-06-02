@@ -17,7 +17,6 @@
 
 <input type="file" id="receipt"
        accept="image/*"
-       capture="environment"
        multiple><br><br>
 
 <button onclick="submitExpense()">Save Expense</button>
@@ -26,7 +25,7 @@
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzr3qCNOdswjEXMjMXq01ztN3-keAEE6tlgP7NiP9roOuOvE7vWuVOpMeBKMk5Ebys/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwkAJIu8fNeq9dz_eGe0ZXI0naQZPJjUKUh6Pjbx83o0uSPkF8LuBG5o9OWopn-rpLc/exec";
 
 function sanitize(text) {
   return text.toLowerCase()
@@ -82,7 +81,10 @@ async function submitExpense() {
       fileNameArray.push(name);
     }
   }
-
+  console.log("Files selected:", files.length);
+  console.log("Base64 array count:", fileBase64Array.length);
+  console.log("Filename array count:", fileNameArray.length);
+  
   document.getElementById("status").innerText = "Uploading...";
 
   const payload = {
