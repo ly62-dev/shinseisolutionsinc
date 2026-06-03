@@ -38,33 +38,32 @@
     }
 
     table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  margin-bottom: 20px;
-}
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-bottom: 20px;
+    }
 
-th {
-  background: #eaeaea;
-  text-align: left;
-}
+    th {
+      background: #eaeaea;
+      text-align: left;
+    }
 
-th,
-td {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
 
-.amount {
-  text-align: right;
-}
+    .amount {
+      text-align: right;
+    }
 
-.total-row {
-  font-weight: bold;
-  background: #f3f3f3;
-}
+    .total-row {
+      font-weight: bold;
+      background: #f3f3f3;
+    }
 
-    select, button {
+    select, button, input {
       padding: 8px;
       margin: 5px 0;
     }
@@ -73,7 +72,6 @@ td {
 
 <body>
 
-<!-- NAV -->
 <div class="nav">
   <a href="../dashboard/index.html" id="nav-dashboard">📊 Dashboard</a>
   <a href="../expense-tracker/index.html" id="nav-expense">➕ Expenses</a>
@@ -85,29 +83,25 @@ td {
 <h2>📈 Expense Reports</h2>
 
 <button onclick="loadData()">🔄 Refresh</button>
-<button onclick="exportCSV()">
-  📥 Export CSV
-</button>
-<button onclick="exportPDF()">
-  📄 Export PDF
-</button>
+<button onclick="exportCSV()">📥 Export CSV</button>
+<button onclick="exportPDF()">📄 Export PDF</button>
+
 <br><br>
 
-<label>Select Month:</label><br>
-  <div style="margin-bottom:15px;">
+<label>From:</label><br>
+<input type="date" id="fromDate" onchange="render()">
 
-  <label>From:</label><br>
-  <input type="date" id="fromDate" onchange="render()">
+<br><br>
 
-  <br><br>
+<label>To:</label><br>
+<input type="date" id="toDate" onchange="render()">
 
-  <label>To:</label><br>
-  <input type="date" id="toDate" onchange="render()">
+<br><br>
 
-</div>
 <select id="monthFilter" onchange="render()"></select>
 
 <h3 id="summary">Loading...</h3>
+
 <h3>Monthly Totals</h3>
 <div id="monthlyTotals"></div>
 
@@ -126,24 +120,38 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyF9QFXq1W1fAJcwJ1Ggmlk
 let allData = [];
 
 /* =========================
-   LOAD DATA
+   DATE PARSER (FIX CORE ISSUE)
+========================= */
+function parseDate(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  return isNaN(d) ? null : d;
+}
+
+/* =========================
+   LOAD DATA (OPTIMIZED)
 ========================= */
 async function loadData() {
 
   const res = await fetch(API_URL);
   const data = await res.json();
 
-  allData = data;
+  // PRE-PARSE DATE ONCE (IMPORTANT FIX)
+  allData = data.map(row => ({
+    ...row,
+    _date: parseDate(row.date)
+  }));
 
   populateMonths();
   render();
 }
-  
-function formatDateMMDDYYYY(dateStr) {
-  if (!dateStr) return "";
 
-  const d = new Date(dateStr);
-  if (isNaN(d)) return dateStr;
+/* =========================
+   FORMAT DATE
+========================= */
+function formatDateMMDDYYYY(dateStr) {
+  const d = parseDate(dateStr);
+  if (!d) return "";
 
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
@@ -151,21 +159,22 @@ function formatDateMMDDYYYY(dateStr) {
 
   return `${mm}-${dd}-${yyyy}`;
 }
+
 /* =========================
    MONTH LIST
 ========================= */
 function populateMonths() {
 
   const select = document.getElementById("monthFilter");
-
   const months = new Set();
 
   allData.forEach(row => {
-    const d = new Date(row.date);
-    if (!isNaN(d)) {
-      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-      months.add(key);
-    }
+
+    const d = row._date;
+    if (!d) return;
+
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    months.add(key);
   });
 
   select.innerHTML = `<option value="all">All Months</option>`;
@@ -176,57 +185,40 @@ function populateMonths() {
 }
 
 /* =========================
-   FILTER + RENDER
+   RENDER (FIXED FILTER LOGIC)
 ========================= */
 function render() {
 
   const selected = document.getElementById("monthFilter").value;
-  const fromDate =
-  document.getElementById("fromDate").value;
-
-  const toDate =
-  document.getElementById("toDate").value;
+  const fromDate = document.getElementById("fromDate").value;
+  const toDate = document.getElementById("toDate").value;
 
   let filtered = allData;
 
-/* MONTH FILTER */
-if (selected !== "all") {
+  /* MONTH FILTER */
+  if (selected !== "all") {
+    filtered = filtered.filter(row => {
+      const d = row._date;
+      if (!d) return false;
 
-  filtered = filtered.filter(row => {
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      return key === selected;
+    });
+  }
 
-    const d = new Date(row.date);
+  /* FROM FILTER */
+  if (fromDate) {
+    const from = new Date(fromDate);
+    filtered = filtered.filter(row => row._date && row._date >= from);
+  }
 
-    const key =
-      `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-
-    return key === selected;
-  });
-}
-
-/* FROM DATE FILTER */
-if (fromDate) {
-
-  filtered = filtered.filter(row => {
-
-    const rowDate = new Date(row.date);
-
-    return rowDate >= new Date(fromDate);
-  });
-}
-
-/* TO DATE FILTER */
-if (toDate) {
-
-  filtered = filtered.filter(row => {
-
-    const rowDate = new Date(row.date);
-
-    return rowDate <= new Date(toDate);
-  });
-}
+  /* TO FILTER */
+  if (toDate) {
+    const to = new Date(toDate);
+    filtered = filtered.filter(row => row._date && row._date <= to);
+  }
 
   let total = 0;
-
   const merchantMap = {};
   const monthlyMap = {};
 
@@ -237,330 +229,123 @@ if (toDate) {
 
     total += amount;
 
-    merchantMap[merchant] =
-      (merchantMap[merchant] || 0) + amount;
+    merchantMap[merchant] = (merchantMap[merchant] || 0) + amount;
 
-    const d = new Date(row.date);
+    const d = row._date;
+    if (!d) return;
 
-    const monthKey =
-      `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-
-    monthlyMap[monthKey] =
-      (monthlyMap[monthKey] || 0) + amount;
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    monthlyMap[monthKey] = (monthlyMap[monthKey] || 0) + amount;
   });
 
-  const transactionCount = filtered.length;
-
+  /* SUMMARY */
   document.getElementById("summary").innerHTML = `
     Total Expenses: <b>₱${total.toLocaleString()}</b><br>
-    Transactions: <b>${transactionCount}</b><br>
-    Average Expense:
-    <b>₱${(transactionCount ? total/transactionCount : 0).toLocaleString()}</b>
+    Transactions: <b>${filtered.length}</b>
   `;
 
-  /* MONTHLY TABLE */
-
-  let monthlyHtml = `
-    <table>
-      <tr>
-        <th>Month</th>
-        <th class="amount">Amount</th>
-      </tr>
-  `;
+  /* MONTHLY */
+  let monthlyHtml = `<table>
+    <tr><th>Month</th><th class="amount">Amount</th></tr>`;
 
   Object.keys(monthlyMap)
     .sort()
     .reverse()
-    .forEach(month => {
-
+    .forEach(m => {
       monthlyHtml += `
         <tr>
-          <td>${month}</td>
-          <td class="amount">
-            ₱${monthlyMap[month].toLocaleString()}
-          </td>
+          <td>${m}</td>
+          <td class="amount">₱${monthlyMap[m].toLocaleString()}</td>
         </tr>
       `;
     });
 
-  monthlyHtml += "</table>";
+  monthlyHtml += `</table>`;
+  document.getElementById("monthlyTotals").innerHTML = monthlyHtml;
 
-  document.getElementById("monthlyTotals").innerHTML =
-    monthlyHtml;
-
-  /* MERCHANT TABLE */
-
-  let merchantHtml = `
-    <table>
-      <tr>
-        <th>Merchant</th>
-        <th class="amount">Amount</th>
-      </tr>
-  `;
+  /* MERCHANT */
+  let merchantHtml = `<table>
+    <tr><th>Merchant</th><th class="amount">Amount</th></tr>`;
 
   Object.keys(merchantMap)
     .sort((a,b) => merchantMap[b]-merchantMap[a])
-    .forEach(name => {
-
+    .forEach(m => {
       merchantHtml += `
         <tr>
-          <td>${name}</td>
-          <td class="amount">
-            ₱${merchantMap[name].toLocaleString()}
-          </td>
+          <td>${m}</td>
+          <td class="amount">₱${merchantMap[m].toLocaleString()}</td>
         </tr>
       `;
     });
 
-  merchantHtml += `
-      <tr class="total-row">
-        <td>GRAND TOTAL</td>
-        <td class="amount">
-          ₱${total.toLocaleString()}
-        </td>
-      </tr>
-    </table>
-  `;
+  merchantHtml += `</table>`;
+  document.getElementById("merchantBreakdown").innerHTML = merchantHtml;
 
-  document.getElementById("merchantBreakdown").innerHTML =
-    merchantHtml;
-  /* EXPENSE DETAILS TABLE */
-
-let detailHtml = `
-<table>
-  <tr>
-    <th>Date</th>
-    <th>TIN</th>
-    <th>Merchant</th>
-    <th class="amount">Amount</th>
-  </tr>
-`;
-
-filtered
-  .sort((a,b) => new Date(b.date) - new Date(a.date))
-  .forEach(row => {
-
-    detailHtml += `
-      <tr>
-        <td>${formatDateMMDDYYYY(row.date)}</td>
-        <td>${row.vatTin || ""}</td>
-        <td>${row.merchant || ""}</td>
-        <td class="amount">
-          ₱${parseFloat(row.amount || 0).toLocaleString()}
-        </td>
-      </tr>
-    `;
-  });
-
-detailHtml += `
-  <tr class="total-row">
-    <td colspan="3">TOTAL</td>
-    <td class="amount">
-      ₱${total.toLocaleString()}
-    </td>
-  </tr>
-</table>
-`;
-
-document.getElementById("expenseDetails").innerHTML =
-  detailHtml;
-}
-/*===========EXPORT=========*/
-  function exportCSV() {
-
-  const selected = document.getElementById("monthFilter").value;
-
-  let filtered = allData;
-
-  if (selected !== "all") {
-
-    filtered = allData.filter(row => {
-
-      const d = new Date(row.date);
-
-      const key =
-        `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-
-      return key === selected;
-    });
-  }
-
-  let csv =
-    "Date,TIN,Merchant,Amount\n";
+  /* DETAILS */
+  let detailHtml = `<table>
+    <tr>
+      <th>Date</th>
+      <th>TIN</th>
+      <th>Merchant</th>
+      <th class="amount">Amount</th>
+    </tr>`;
 
   filtered
-    .sort((a,b) => new Date(b.date) - new Date(a.date))
+    .sort((a,b) => (b._date || 0) - (a._date || 0))
     .forEach(row => {
 
-      csv +=
-        `"${formatDateMMDDYYYY(row.date)}",` +
-        `"${row.vatTin || ""}",` +
-        `"${row.merchant || ""}",` +
-        `"${row.amount || 0}"\n`;
-    });
-
-  const blob = new Blob(
-    [csv],
-    { type: "text/csv;charset=utf-8;" }
-  );
-
-  const link = document.createElement("a");
-
-  const fileName =
-    selected === "all"
-      ? "Expense_Report_All.csv"
-      : `Expense_Report_${selected}.csv`;
-
-  link.href = URL.createObjectURL(blob);
-  link.download = fileName;
-
-  document.body.appendChild(link);
-
-  link.click();
-
-  document.body.removeChild(link);
-}
-  function exportPDF() {
-
-  const selected = document.getElementById("monthFilter").value;
-
-  let filtered = allData;
-
-  if (selected !== "all") {
-
-    filtered = allData.filter(row => {
-
-      const d = new Date(row.date);
-
-      const key =
-        `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-
-      return key === selected;
-    });
-  }
-
-  let total = 0;
-
-  let html = `
-    <html>
-    <head>
-      <title>Expense Report</title>
-
-      <style>
-        body {
-          font-family: Arial;
-          padding: 20px;
-        }
-
-        h1 {
-          margin-bottom: 5px;
-        }
-
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 15px;
-        }
-
-        th, td {
-          border: 1px solid #000;
-          padding: 8px;
-          text-align: left;
-        }
-
-        .amount {
-          text-align: right;
-        }
-
-        .total {
-          font-weight: bold;
-        }
-      </style>
-    </head>
-    <body>
-
-      <h1>Expense Report</h1>
-
-      <p>
-        Month:
-        ${selected === "all" ? "All Months" : selected}
-      </p>
-
-      <table>
-
-        <tr>
-          <th>Date</th>
-          <th>TIN</th>
-          <th>Merchant</th>
-          <th>Amount</th>
-        </tr>
-  `;
-
-  filtered
-    .sort((a,b) => new Date(b.date) - new Date(a.date))
-    .forEach(row => {
-
-      const amount = parseFloat(row.amount || 0);
-
-      total += amount;
-
-      html += `
+      detailHtml += `
         <tr>
           <td>${formatDateMMDDYYYY(row.date)}</td>
           <td>${row.vatTin || ""}</td>
           <td>${row.merchant || ""}</td>
-          <td class="amount">
-            ₱${amount.toLocaleString()}
-          </td>
+          <td class="amount">₱${parseFloat(row.amount || 0).toLocaleString()}</td>
         </tr>
       `;
     });
 
-  html += `
-        <tr class="total">
-          <td colspan="3">
-            TOTAL
-          </td>
-          <td class="amount">
-            ₱${total.toLocaleString()}
-          </td>
-        </tr>
+  detailHtml += `
+    <tr class="total-row">
+      <td colspan="3">TOTAL</td>
+      <td class="amount">₱${total.toLocaleString()}</td>
+    </tr>
+  </table>`;
 
-      </table>
-
-    </body>
-    </html>
-  `;
-
-  const win = window.open("", "_blank");
-
-  win.document.write(html);
-  win.document.close();
-
-  setTimeout(() => {
-    win.print();
-  }, 500);
+  document.getElementById("expenseDetails").innerHTML = detailHtml;
 }
 
 /* =========================
-   NAV ACTIVE
+   EXPORT CSV
 ========================= */
+function exportCSV() {
+
+  let csv = "Date,TIN,Merchant,Amount\n";
+
+  allData.forEach(row => {
+    csv += `"${formatDateMMDDYYYY(row.date)}","${row.vatTin || ""}","${row.merchant || ""}","${row.amount || 0}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "report.csv";
+  a.click();
+}
+
+/* =========================
+   EXPORT PDF
+========================= */
+function exportPDF() {
+
+  const win = window.open("", "_blank");
+
+  win.document.write(document.getElementById("expenseDetails").innerHTML);
+  win.print();
+}
+
+/* INIT */
 window.addEventListener("DOMContentLoaded", () => {
-
-  const path = window.location.pathname;
-
-  if (path.includes("/dashboard/")) {
-    document.getElementById("nav-dashboard")?.classList.add("active");
-  }
-
-  if (path.includes("/expense-tracker/")) {
-    document.getElementById("nav-expense")?.classList.add("active");
-  }
-
-  if (path.includes("/reports/")) {
-    document.getElementById("nav-reports")?.classList.add("active");
-  }
-
   loadData();
 });
 
