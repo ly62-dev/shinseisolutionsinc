@@ -88,6 +88,9 @@ td {
 <button onclick="exportCSV()">
   📥 Export CSV
 </button>
+<button onclick="exportPDF()">
+  📄 Export PDF
+</button>
 <br><br>
 
 <label>Select Month:</label><br>
@@ -376,6 +379,127 @@ document.getElementById("expenseDetails").innerHTML =
   link.click();
 
   document.body.removeChild(link);
+}
+  function exportPDF() {
+
+  const selected = document.getElementById("monthFilter").value;
+
+  let filtered = allData;
+
+  if (selected !== "all") {
+
+    filtered = allData.filter(row => {
+
+      const d = new Date(row.date);
+
+      const key =
+        `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+
+      return key === selected;
+    });
+  }
+
+  let total = 0;
+
+  let html = `
+    <html>
+    <head>
+      <title>Expense Report</title>
+
+      <style>
+        body {
+          font-family: Arial;
+          padding: 20px;
+        }
+
+        h1 {
+          margin-bottom: 5px;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 15px;
+        }
+
+        th, td {
+          border: 1px solid #000;
+          padding: 8px;
+          text-align: left;
+        }
+
+        .amount {
+          text-align: right;
+        }
+
+        .total {
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+
+      <h1>Expense Report</h1>
+
+      <p>
+        Month:
+        ${selected === "all" ? "All Months" : selected}
+      </p>
+
+      <table>
+
+        <tr>
+          <th>Date</th>
+          <th>TIN</th>
+          <th>Merchant</th>
+          <th>Amount</th>
+        </tr>
+  `;
+
+  filtered
+    .sort((a,b) => new Date(b.date) - new Date(a.date))
+    .forEach(row => {
+
+      const amount = parseFloat(row.amount || 0);
+
+      total += amount;
+
+      html += `
+        <tr>
+          <td>${formatDateMMDDYYYY(row.date)}</td>
+          <td>${row.vatTin || ""}</td>
+          <td>${row.merchant || ""}</td>
+          <td class="amount">
+            ₱${amount.toLocaleString()}
+          </td>
+        </tr>
+      `;
+    });
+
+  html += `
+        <tr class="total">
+          <td colspan="3">
+            TOTAL
+          </td>
+          <td class="amount">
+            ₱${total.toLocaleString()}
+          </td>
+        </tr>
+
+      </table>
+
+    </body>
+    </html>
+  `;
+
+  const win = window.open("", "_blank");
+
+  win.document.write(html);
+  win.document.close();
+
+  setTimeout(() => {
+    win.print();
+  }, 500);
 }
 
 /* =========================
