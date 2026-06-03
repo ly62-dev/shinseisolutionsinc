@@ -85,7 +85,9 @@ td {
 <h2>📈 Expense Reports</h2>
 
 <button onclick="loadData()">🔄 Refresh</button>
-
+<button onclick="exportCSV()">
+  📥 Export CSV
+</button>
 <br><br>
 
 <label>Select Month:</label><br>
@@ -319,6 +321,61 @@ detailHtml += `
 
 document.getElementById("expenseDetails").innerHTML =
   detailHtml;
+}
+/*===========EXPORT=========*/
+  function exportCSV() {
+
+  const selected = document.getElementById("monthFilter").value;
+
+  let filtered = allData;
+
+  if (selected !== "all") {
+
+    filtered = allData.filter(row => {
+
+      const d = new Date(row.date);
+
+      const key =
+        `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+
+      return key === selected;
+    });
+  }
+
+  let csv =
+    "Date,TIN,Merchant,Amount\n";
+
+  filtered
+    .sort((a,b) => new Date(b.date) - new Date(a.date))
+    .forEach(row => {
+
+      csv +=
+        `"${formatDateMMDDYYYY(row.date)}",` +
+        `"${row.vatTin || ""}",` +
+        `"${row.merchant || ""}",` +
+        `"${row.amount || 0}"\n`;
+    });
+
+  const blob = new Blob(
+    [csv],
+    { type: "text/csv;charset=utf-8;" }
+  );
+
+  const link = document.createElement("a");
+
+  const fileName =
+    selected === "all"
+      ? "Expense_Report_All.csv"
+      : `Expense_Report_${selected}.csv`;
+
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  document.body.removeChild(link);
 }
 
 /* =========================
