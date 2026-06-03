@@ -94,6 +94,17 @@ td {
 <br><br>
 
 <label>Select Month:</label><br>
+  <div style="margin-bottom:15px;">
+
+  <label>From:</label><br>
+  <input type="date" id="fromDate" onchange="render()">
+
+  <br><br>
+
+  <label>To:</label><br>
+  <input type="date" id="toDate" onchange="render()">
+
+</div>
 <select id="monthFilter" onchange="render()"></select>
 
 <h3 id="summary">Loading...</h3>
@@ -170,20 +181,49 @@ function populateMonths() {
 function render() {
 
   const selected = document.getElementById("monthFilter").value;
+  const fromDate =
+  document.getElementById("fromDate").value;
+
+  const toDate =
+  document.getElementById("toDate").value;
 
   let filtered = allData;
 
-  if (selected !== "all") {
-    filtered = allData.filter(row => {
+/* MONTH FILTER */
+if (selected !== "all") {
 
-      const d = new Date(row.date);
+  filtered = filtered.filter(row => {
 
-      const key =
-        `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const d = new Date(row.date);
 
-      return key === selected;
-    });
-  }
+    const key =
+      `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+
+    return key === selected;
+  });
+}
+
+/* FROM DATE FILTER */
+if (fromDate) {
+
+  filtered = filtered.filter(row => {
+
+    const rowDate = new Date(row.date);
+
+    return rowDate >= new Date(fromDate);
+  });
+}
+
+/* TO DATE FILTER */
+if (toDate) {
+
+  filtered = filtered.filter(row => {
+
+    const rowDate = new Date(row.date);
+
+    return rowDate <= new Date(toDate);
+  });
+}
 
   let total = 0;
 
