@@ -40,6 +40,17 @@
       padding: 20px;
     }
 
+    .category-badge {
+  display:inline-block;
+  background:#00c896;
+  color:black;
+  padding:3px 8px;
+  border-radius:12px;
+  font-size:12px;
+  font-weight:bold;
+  margin:4px 0;
+}
+
     /* CARDS */
     .card {
       border-bottom: 1px solid #ddd;
@@ -136,20 +147,28 @@ async function loadData() {
 
     const merchant = row.merchant || "Unknown";
     const amount = parseFloat(row.amount || 0);
-    const date = row.date || "";
+    const date = formatDateMMDDYYYY(row.date);
 
     total += amount;
 
     html += `
-      <div class="card" onclick="openRecord(${index})">
+  <div class="card" onclick="openRecord(${index})">
 
-        <b>${merchant}</b><br>
-        ₱${amount}<br>
-        <small>${formatDateMMDDYYYY(date)}</small><br>
+    <b>${merchant}</b><br>
 
-        <small style="color:blue;">View receipts →</small>
-      </div>
-    `;
+    <div class="category-badge">
+  ${row.category || "Uncategorized"}
+</div>
+
+    ₱${amount.toLocaleString()}<br>
+
+    <small>${date}</small><br>
+
+    <small style="color:blue;">
+      View receipts →
+    </small>
+  </div>
+`;
   });
 
   document.getElementById("total").innerText =
@@ -169,9 +188,22 @@ function openRecord(index) {
   const content = document.getElementById("modalContent");
 
   const merchant = row.merchant || "Expense";
-  const files = row.receiptFiles || "";
+const category = row.category || "Uncategorized";
+const amount = parseFloat(row.amount || 0);
+const date = formatDateMMDDYYYY(row.date);
+const files = row.receiptFiles || "";
 
-  content.innerHTML = `<h3 style="color:white;">${merchant}</h3>`;
+content.innerHTML = `
+  <h3 style="color:white; margin-bottom:5px;">
+    ${merchant}
+  </h3>
+
+  <div style="color:#ddd; margin-bottom:15px;">
+    <div>📂 Category: ${category}</div>
+    <div>💰 Amount: ₱${amount.toLocaleString()}</div>
+    <div>📅 Date: ${date}</div>
+  </div>
+`;
 
   if (!files) {
     content.innerHTML += "<p style='color:white;'>No attachments</p>";
