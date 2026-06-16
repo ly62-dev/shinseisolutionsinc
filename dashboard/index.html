@@ -122,6 +122,68 @@
   <div id="modalContent"></div>
 </div>
 
+<!-- EDIT MODAL -->
+<div id="editModal"
+     style="
+       display:none;
+       position:fixed;
+       inset:0;
+       background:rgba(0,0,0,.85);
+       z-index:10000;
+       overflow:auto;
+       padding:20px;
+     ">
+
+  <div style="
+      background:white;
+      max-width:500px;
+      margin:auto;
+      padding:20px;
+      border-radius:10px;
+    ">
+
+    <h3>Edit Expense</h3>
+
+    <input type="hidden" id="editId">
+
+    <label>Date</label><br>
+    <input type="date" id="editDate"><br><br>
+
+    <label>TIN</label><br>
+    <input type="text" id="editTin"><br><br>
+
+    <label>Merchant</label><br>
+    <input type="text" id="editMerchant"><br><br>
+
+    <label>Amount</label><br>
+    <input type="number" id="editAmount"><br><br>
+
+    <label>Cash Voucher</label><br>
+    <input type="text" id="editCashVoucher"><br><br>
+
+    <label>Category</label><br>
+    <select id="editCategory">
+      <option value="Meals">Meals</option>
+      <option value="Transportation">Transportation</option>
+      <option value="Office Supplies">Office Supplies</option>
+      <option value="Utilities">Utilities</option>
+      <option value="Entertainment">Entertainment</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <br><br>
+
+    <button onclick="saveEdit()">
+      💾 Save Changes
+    </button>
+
+    <button onclick="closeEditModal()">
+      Cancel
+    </button>
+
+  </div>
+</div>
+  
 <script>
 
 const API_URL = "https://script.google.com/macros/s/AKfycbxPNUcE7OI0R1vKopawuu2EjcydN0XziSo9Q3tpJRJgx2QbSrGZRx96q6aAmIqQJG66/exec";
@@ -274,6 +336,101 @@ function closeModal() {
   const yyyy = d.getFullYear();
 
   return `${mm}-${dd}-${yyyy}`;
+}
+
+function editExpense(index) {
+
+  const row = allData[index];
+
+  document.getElementById("editId").value =
+    row.id || "";
+
+  document.getElementById("editDate").value =
+    formatForInput(row.date);
+
+  document.getElementById("editTin").value =
+    row.vatTin || "";
+
+  document.getElementById("editMerchant").value =
+    row.merchant || "";
+
+  document.getElementById("editAmount").value =
+    row.amount || "";
+
+  document.getElementById("editCashVoucher").value =
+    row.cashVoucher || "";
+
+  document.getElementById("editCategory").value =
+    row.category || "Other";
+
+  document.getElementById("editModal").style.display =
+    "block";
+}
+
+function closeEditModal() {
+
+  document.getElementById("editModal").style.display =
+    "none";
+}
+
+function formatForInput(dateValue) {
+
+  const d = new Date(dateValue);
+
+  if (isNaN(d)) return "";
+
+  return d.toISOString().split("T")[0];
+}
+
+async function saveEdit() {
+
+  const payload = {
+
+    action: "update",
+
+    id:
+      document.getElementById("editId").value,
+
+    date:
+      document.getElementById("editDate").value,
+
+    vatTin:
+      document.getElementById("editTin").value,
+
+    merchant:
+      document.getElementById("editMerchant").value,
+
+    amount:
+      document.getElementById("editAmount").value,
+
+    cashVoucher:
+      document.getElementById("editCashVoucher").value,
+
+    category:
+      document.getElementById("editCategory").value
+  };
+
+  const res = await fetch(API_URL, {
+
+    method: "POST",
+
+    body: JSON.stringify(payload)
+  });
+
+  const result = await res.json();
+
+  if (result.status === "success") {
+
+    alert("Expense updated");
+
+    closeEditModal();
+
+    loadData();
+
+  } else {
+
+    alert("Update failed");
+  }
 }
   
 /* =========================
