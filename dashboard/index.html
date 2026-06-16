@@ -164,9 +164,16 @@ async function loadData() {
 
     <small>${date}</small><br>
 
-    <small style="color:blue;">
-      View receipts →
-    </small>
+    <div style="margin-top:8px;">
+  <button
+    onclick="event.stopPropagation();editExpense(${index})">
+    ✏️ Edit
+  </button>
+
+  <span style="color:blue;margin-left:10px;">
+    View receipts →
+  </span>
+</div>
   </div>
 `;
   });
